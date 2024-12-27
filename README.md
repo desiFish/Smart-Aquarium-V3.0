@@ -1,75 +1,97 @@
 # Aquarium Automation using NodeMCU ESP-12E V3.0
 
-## Disclaimer: I take absolutely no responsibility for any accidents that may happen due to the use of this code. Use it with your own risk. If you are a minor work under proper supervision. HIGH VOLTAGE electricity involved!! Proceed with extreme caution.
+## ⚠️ Disclaimer
+**HIGH VOLTAGE electricity involved!** Use at your own risk. Work under proper supervision if you are a minor. I take no responsibility for any accidents that may occur from using this code.
 
-### What's New?
-* Completely New WebServer UI
-* Uses new Asynchronous Webserver
-* Real time page update using JS XMLHTTPREQUEST
-* Uses ESP-NOW to broadcast time to other ESPs without dedicated RTC modules
-* Better organised code
-* 4 Modes: Auto, Power Saver, Timer, Manual
-* Displays current status of relay on webserver using intuitive font
-* Now using Solid State Relays over Mechanical one
-* Just make the circuit as mentioned below and upload the code (You may want to check gateway address)
+## 🎯 Features
+- Modern responsive web interface
+- Asynchronous webserver for better performance
+- Real-time page updates using JavaScript XMLHttpRequest
+- ESP-NOW time broadcasting to other ESP devices
+- Multiple control modes:
+  - Automatic (time-based)
+  - Power Saver
+  - Timer
+  - Manual
+- Intuitive status display on web interface
+- Solid State Relay support for reliability
+- Over-the-Air (OTA) updates
+- Automatic time synchronization
+- Visual feedback and WiFi signal indicators
 
+## 📦 Prerequisites
 
-Also, this code needs some optimisations, so, if you have updated something and it works better than mine, then please let me know.
+### Required Libraries
+1. [DS3231](https://github.com/NorthernWidget/DS3231) - RTC module
+2. [NTPClient](https://github.com/arduino-libraries/NTPClient) - Network time
+3. Other libraries available via Arduino IDE Library Manager:
+   - ESP8266WiFi
+   - ESPAsyncTCP
+   - ESPAsyncWebServer
+   - Adafruit_GFX
+   - Adafruit_SSD1306
 
-Using NodeMCU for aquarium lights, filter, skimmer, power head/wavemaker control with OTA updates, timers, auto time update, visual feedbacks and WiFi signal level icons.
+### ESP8266 Board Support
+Add this URL in Arduino IDE:
+```
+http://arduino.esp8266.com/stable/package_esp8266com_index.json
+```
+File → Preferences → Additional Boards Manager URLs
 
-##It works as "smart switches" which turns something on or off automatically (by time or manually). This can be applied to varied of things and can be expanded as automatic dosers, automatic water changes, etc (limited by your imagination).
-## Libraries (Specific few)
-1. For DS3231 Library use https://github.com/NorthernWidget/DS3231
-2. https://github.com/arduino-libraries/NTPClient
+## 🔧 Hardware Setup
 
-Rest of the libraries can be downloaded within Arduino IDE Libraries Manager, and some of them are already included (within Arduino). Please google for "how-to" if you cannot figure it.
+### I2C Devices (DS3231 & OLED 128x64)
+| NodeMCU | Device |
+|---------|--------|
+| D1 | SCL |
+| D2 | SDA |
+| 3.3V | VCC |
+| GND | GND |
 
-Please add http://arduino.esp8266.com/stable/package_esp8266com_index.json in File --> Preferences --> Additional Boards Manager URLs to get support for all ESP Boards.
+> Note: Both I2C devices share the same pins. For I2C address conflicts, adjust pull-up resistor values.
 
-## Upcoming features or changes
-Check [issues](https://github.com/KamadoTanjiro-beep/Smart-Aquarium-V3.0/issues)
+### 4-Channel Relay Board
+| NodeMCU | Relay |
+|---------|-------|
+| D3 | IN1 |
+| D5 | IN2 |
+| D6 | IN3 |
+| D7 | IN4 |
 
-## Pin Configuration:
+> Important: Use separate power supply for relay board. Connect GND between NodeMCU and power supply.
 
-DS3231 and 128x64 OLED using I2C and are connected to
+## 🛠️ Required Components
 
-NodeMCU --> Device <br/>
-D1 --> SCL <br/>
-D2 --> SDA <br/>
-3.3 --> VCC <br/>
-G --> GND <br/>
+### Core Components
+1. **Relay Board**
+   - 4 Channel 5V SSR (Solid State Relay)
+   - 250V 2A with Resistive Fuse
+   - ![Relay Board](https://robu.in/wp-content/uploads/2021/11/5v-4-channel-ssr-solid-state-relay-module-240v-2a-output-with-resistive-fuse-tech7978-6426-2-550x550-1.jpg)
 
-Yes, connect both the I2C devices to the same pin (purpose of I2C). If you are facing I2C device address related issues then please Google it. It is very common and very easy to fix. You just need to adjust one or two resistor value.
+2. **RTC Module**
+   - DS3231 AT24C32 IIC Precision RTC
+   - ![DS3231](https://m.media-amazon.com/images/I/41RP9FjC+jL.jpg)
 
-For the 4 Channel relay board
+3. **Microcontroller**
+   - NodeMCU-ESP8266 Development Board ESP12E
+   - ![NodeMCU](https://m.media-amazon.com/images/I/51lIrI5vnQL.jpg)
 
-NodeMCU --> Device <br/>
-D3 --> In1 <br/>
-D5 --> In2 <br/>
-D6 --> In3 <br/>
-D7 --> In4 <br/>
+4. **Display**
+   - 1.3" I2C IIC 128x64 OLED Display Module
+   - White color
+   - ![OLED](https://www.electronicscomp.com/image/cache/catalog/13-inch-i2c-iic-oled-display-module-4pin-white-800x800.jpg)
 
-For GND and VCC, use appropriate separate power supply (don't take power from NodeMCU, may burn). If you are using separate powersupplies for NodeMCU and Relay, then make sure to connect both the GNDs of Node and Powersupply together, else the relay module won't work. If confused, take help from google or contact me.
+### Additional Requirements
+- Appropriate power supplies
+- Electrical switches (recommended in series with relays)
+- Connecting wires
+- Project enclosure
 
-## MAIN Parts: 
-### Use electrical switches in series with the relay for more control.
+## 🌐 Web Interface
+![Web Interface](https://github.com/chikne97/Smart-Aquarium-V3.0/blob/main/demo2.png)
 
-<br/>
-<img src="https://robu.in/wp-content/uploads/2021/11/5v-4-channel-ssr-solid-state-relay-module-240v-2a-output-with-resistive-fuse-tech7978-6426-2-550x550-1.jpg" alt="Relay Board" width="200" height="200"> <br/>
-4 Channel 5V Relay Module Solid State High-Level SSR DC Control 250V 2A with Resistive Fuse <br/><br/>
+## 🔄 Future Updates
+See [Issues](https://github.com/KamadoTanjiro-beep/Smart-Aquarium-V3.0/issues) for planned features and improvements.
 
-<img src="https://m.media-amazon.com/images/I/41RP9FjC+jL.jpg" alt="DS3231" width="200" height="200"> <br/>
-DS3231 AT24C32 IIC Precision RTC <br/><br/>
-
-<img src="https://m.media-amazon.com/images/I/51lIrI5vnQL.jpg" alt="NodeMCU" width="200" height="200"> <br/>
-NodeMCU-ESP8266 Development Board ESP12E <br/><br/>
-
-<img src="https://www.electronicscomp.com/image/cache/catalog/13-inch-i2c-iic-oled-display-module-4pin-white-800x800.jpg" alt="OLED" width="200" height="200"> <br/>
-1.3 Inch I2C IIC 128x64 OLED Display Module 4 Pin - White <br/><br/>
-
-Other parts as required
-
-## WEB SERVER
-
-<img src="https://github.com/chikne97/Smart-Aquarium-V3.0/blob/main/demo2.png" alt="OLED" width="600" height="800"> <br/>
+## 🤝 Contributing
+If you've made improvements to the code, please share them! Contact me with your updates.

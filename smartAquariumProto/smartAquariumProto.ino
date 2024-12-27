@@ -1,12 +1,8 @@
 /*********
-ORIGINAL:
-  Rui Santos
-  The above copyright notice and this permission notice shall be included in all
-  copies or substantial portions of the Software.
-
-Modified:
 Aniket Patra
 24/12/2022 (started earlier) V1.0.0.0
+
+Hardware: NodeMCU 1.0 (ESP-12E Module)
 
 Button | Code
 -------|------
@@ -87,7 +83,7 @@ TEMP. SOLUTION- Select the choice of timer i.e. 5 min, 15 min or 30 min, quickly
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <NTPClient.h>
-#include <FS.h> //Include File System Headers
+#include <FS.h>  //Include File System Headers
 // OTA
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
@@ -95,17 +91,17 @@ TEMP. SOLUTION- Select the choice of timer i.e. 5 min, 15 min or 30 min, quickly
 #include <DS3231.h>
 #include <string.h>
 
-#include "global.h" //remove this
+#include "global.h"  //remove this (you may keep it if you store your pass and ssid here)
 // ESPNOW
 #include <espnow.h>
 
 #ifndef STASSID
-#define STASSID "YOUR_SSID"    // WIFI NAME/SSID
-#define STAPSK "YOUR_PASSWORD" // WIFI PASSWORD
+#define STASSID "YOUR_SSID"     // WIFI NAME/SSID
+#define STAPSK "YOUR_PASSWORD"  // WIFI PASSWORD
 #endif
 
-const char *ssid = pssid;     // replace "pssid" and with "STASSID"
-const char *password = ppass; // replace "ppass" and with "STAPSK"
+const char *ssid = pssid;      // replace "pssid" and with "STASSID" (STRING Data)
+const char *password = ppass;  // replace "ppass" and with "STAPSK" (STRING Data)
 
 const char *PARAM_INPUT_1 = "count";
 const char *PARAM_INPUT_2 = "code";
@@ -130,173 +126,122 @@ IPAddress gateway(192, 168, 29, 1);
 
 IPAddress subnet(255, 255, 255, 0);
 
-IPAddress primaryDNS(8, 8, 8, 8);   // optional
-IPAddress secondaryDNS(8, 8, 4, 4); // optional
+IPAddress primaryDNS(8, 8, 8, 8);    // optional
+IPAddress secondaryDNS(8, 8, 4, 4);  // optional
 
-/*void fileWriter(int data, int count) {
-  //The data in integer is a time, ex 06:00 is 600, count is 1 for on time and 2 for off time
-  String rem = String(data);
-  rem = rem + '\n';
-  File file;
-
-  if (count == 1)
-    file = SPIFFS.open("/onData.txt", "w");  // Open File for reading
-  else if (count == 2)
-    file = SPIFFS.open("/offData.txt", "w");  // Open File for reading
-
-  if (!file) {
-    Serial.println("Error opening file for writing");
-    return;
-  }
-
-  int bytesWritten = file.print(rem);
-  int len = rem.length();
-
-  if (bytesWritten == len) {
-    Serial.println("Data Saved: ");
-    Serial.println(bytesWritten);
-    Serial.println(rem);
-  } else {
-    Serial.println("Data Save Failed");
-    Serial.println(bytesWritten);
-    Serial.println(len);
-  }
-  file.close();
-}
-
-void fileReader(int count) {
-  File file;
-  String rem;
-  if (count == 1)
-    file = SPIFFS.open("/onData.txt", "r");  // Open File for reading
-  else if (count == 2)
-    file = SPIFFS.open("/offData.txt", "r");  // Open File for reading
-
-  if (!file) {
-    Serial.println("Error opening file for reading");
-    return;
-  }
-  int line = 0;
-  while (file.available()) {
-    if (line == 0) {
-      rem = file.readStringUntil('\n');
-    }
-  }
-
-  if (count == 1)
-    onTime = rem.toInt();
-  else if (count == 2)
-    offTime = rem.toInt();
-  file.close();
-}*/
 
 unsigned long lastTime = 0;
-const long timerDelay = 30000; // check relay status every 30 seconds
+const long timerDelay = 30000;  // check relay status every 30 seconds
 
 unsigned long lastTime1 = 0;
-const long timerDelay1 = 5000; // check wifi status every 900 m.seconds
+const long timerDelay1 = 5000;  // check wifi status every 900 m.seconds
 
 unsigned long lastTime2 = 0;
-const long timerDelay2 = 800; // send time every 1000 m.seconds
+const long timerDelay2 = 800;  // send time every 1000 m.seconds
 
 // utc offset according to India, please change according to your location
 const long utcOffsetInSeconds = 19800;
 
-char week[7][20] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+char week[7][20] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 
 // Define NTP Client to get time
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "asia.pool.ntp.org", utcOffsetInSeconds);
 
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+#define SCREEN_WIDTH 128  // OLED display width, in pixels
+#define SCREEN_HEIGHT 64  // OLED display height, in pixels
 
-#define OLED_RESET LED_BUILTIN // Reset pin # (or -1 if sharing Arduino reset pin)
-#define SCREEN_ADDRESS 0x3C    // 0x3c for 0x78
+#define OLED_RESET LED_BUILTIN  // Reset pin # (or -1 if sharing Arduino reset pin)
+#define SCREEN_ADDRESS 0x3C     // 0x3c for 0x78
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // different WiFi icons Full, Medium, Half and Low Signal. ! for no connection
 static const unsigned char PROGMEM wifiFull[] = {
-    0x00, 0x00, 0x00, 0x00, 0x07, 0xE0, 0x3F, 0xFC, 0x70, 0x0E, 0xE0, 0x07, 0x47, 0xE2, 0x1E, 0x78,
-    0x18, 0x18, 0x03, 0xC0, 0x07, 0xE0, 0x00, 0x00, 0x01, 0x80, 0x01, 0x80, 0x00, 0x00, 0x00, 0x00};
+  0x00, 0x00, 0x00, 0x00, 0x07, 0xE0, 0x3F, 0xFC, 0x70, 0x0E, 0xE0, 0x07, 0x47, 0xE2, 0x1E, 0x78,
+  0x18, 0x18, 0x03, 0xC0, 0x07, 0xE0, 0x00, 0x00, 0x01, 0x80, 0x01, 0x80, 0x00, 0x00, 0x00, 0x00
+};
 
 static const unsigned char PROGMEM wifiMed[] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0xE0, 0x1E, 0x78,
-    0x18, 0x18, 0x03, 0xC0, 0x07, 0xE0, 0x00, 0x00, 0x01, 0x80, 0x01, 0x80, 0x00, 0x00, 0x00, 0x00};
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0xE0, 0x1E, 0x78,
+  0x18, 0x18, 0x03, 0xC0, 0x07, 0xE0, 0x00, 0x00, 0x01, 0x80, 0x01, 0x80, 0x00, 0x00, 0x00, 0x00
+};
 
 static const unsigned char PROGMEM wifiHalf[] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x03, 0xC0, 0x07, 0xE0, 0x00, 0x00, 0x01, 0x80, 0x01, 0x80, 0x00, 0x00, 0x00, 0x00};
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x03, 0xC0, 0x07, 0xE0, 0x00, 0x00, 0x01, 0x80, 0x01, 0x80, 0x00, 0x00, 0x00, 0x00
+};
 
 static const unsigned char PROGMEM wifiLow[] = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x80, 0x01, 0x80, 0x00, 0x00, 0x00, 0x00};
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x80, 0x01, 0x80, 0x00, 0x00, 0x00, 0x00
+};
 
-const unsigned char picture[] PROGMEM = { // picture of a window (during boot)
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+const unsigned char picture[] PROGMEM = {  // picture of a window (during boot)
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xff, 0xfe, 0x7f, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
 
 // forward declarations
 
@@ -308,11 +253,11 @@ void relayStatusPrinter();
 
 // status flags
 
-byte OLEDConfig = 0;                 // Config=1 means auto (based on timer),Config=0 means Manual
-byte OLEDStatus = 1, updateTime = 0; // Status = 1 means OLED DISPLAY is ON and reversed for 0 (works only if Config is 0)
+byte OLEDConfig = 0;                  // Config=1 means auto (based on timer),Config=0 means Manual
+byte OLEDStatus = 1, updateTime = 0;  // Status = 1 means OLED DISPLAY is ON and reversed for 0 (works only if Config is 0)
 
 // oled display off at night timings (needs improvement)
-#define OLED_OFF 9 // Hour only. In 24 hours mode i.e. 23 for 11 pm
+#define OLED_OFF 9  // Hour only. In 24 hours mode i.e. 23 for 11 pm
 #define OLED_ON 7
 
 // relay gpio pins
@@ -337,8 +282,7 @@ const String relay4Name = "Light";
 #define RELAY4OFF digitalWrite(relayPin4, LOW)
 
 // Relay Timing and definitions
-typedef struct relaystruct
-{
+typedef struct relaystruct {
   int onTime, offTime, count;
   byte config, autoTimer;
   bool activate;
@@ -367,34 +311,29 @@ tenth param, relayState is used in webserver to show ON or OFF,
 
 Below are CONFIGURATION of relays*/
 
-struct_relay relay1 = {1200, 1900, 1, 0, 0, false, 1, 0, 2, "OFF", 0, 0, 0, 0, 600000, 600000};
-struct_relay relay2 = {1200, 1900, 2, 2, 0, false, 0, 1, 2, "OFF", 0, 0, 0, 0, 600000, 1800000};
-struct_relay relay3 = {1200, 1900, 3, 0, 0, false, 1, 0, 2, "ON", 0, 0, 0, 0, 600000, 600000}; // I am using this for filter, which is crucial thing, hence by default it's ON and in Manual Mode
-struct_relay relay4 = {900, 1500, 4, 1, 0, true, 0, 0, 2, "OFF", 0, 0, 0, 0, 600000, 600000};
+struct_relay relay1 = { 1200, 1900, 1, 0, 0, false, 0, 0, 2, "OFF", 0, 0, 0, 0, 600000, 600000 };
+struct_relay relay2 = { 1200, 1900, 2, 2, 0, false, 0, 1, 2, "OFF", 0, 0, 0, 0, 600000, 1800000 };
+struct_relay relay3 = { 1200, 1900, 3, 0, 0, false, 0, 0, 2, "OFF", 0, 0, 0, 0, 600000, 600000 };  // I am using this for filter, which is crucial thing, hence by default it's ON and in Manual Mode
+struct_relay relay4 = { 800, 1600, 4, 1, 0, true, 1, 0, 2, "OFF", 0, 0, 0, 0, 600000, 600000 };
 
 /*
 Checks configuration and turns on the relays or reads config from SPIFF(to be implemented later)
 Returns nothing.
 */
-void relayInitialize()
-{
-  if (relay1.flag == 1)
-  {
+void relayInitialize() {
+  if (relay1.flag == 1) {
     RELAY1ON;
     relay1.relayState = "ON";
   }
-  if (relay2.flag == 1)
-  {
+  if (relay2.flag == 1) {
     RELAY2ON;
     relay2.relayState = "ON";
   }
-  if (relay3.flag == 1)
-  {
+  if (relay3.flag == 1) {
     RELAY3ON;
     relay3.relayState = "ON";
   }
-  if (relay4.flag == 1)
-  {
+  if (relay4.flag == 1) {
     RELAY4ON;
     relay4.relayState = "ON";
   }
@@ -402,11 +341,10 @@ void relayInitialize()
 
 // REMOVE this section if you don't want to broadcast time data to other ESPs #####################################################
 //  ESPNOW: REPLACE WITH RECEIVER MAC Address
-uint8_t broadcastAddress[] = {0xE8, 0x9F, 0x6D, 0x93, 0x15, 0x0D}; // E8:9F:6D:93:15:0D
+uint8_t broadcastAddress[] = { 0xE8, 0x9F, 0x6D, 0x93, 0x15, 0x0D };  // E8:9F:6D:93:15:0D
 // Structure example to send data
 // Must match the receiver structure
-typedef struct struct_message
-{
+typedef struct struct_message {
   int time[8];
 } struct_message;
 
@@ -414,15 +352,11 @@ struct_message myData;
 /*
 Callback when data is sent
 */
-void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus)
-{
+void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
   Serial.print("Last Packet Send Status: ");
-  if (sendStatus == 0)
-  {
+  if (sendStatus == 0) {
     Serial.println("Delivery success");
-  }
-  else
-  {
+  } else {
     Serial.println("Delivery fail");
   }
 }
@@ -431,28 +365,21 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus)
 /*
 Replaces placeholder with button section in your web page
 */
-String processor(const String &var)
-{
+String processor(const String &var) {
   // Serial.println(var);
   //*****************************BUTTONS GROUP BEGIN**************************
-  if (var == "BUTTONGROUP1")
-  {
+  if (var == "BUTTONGROUP1") {
     String buttons = "";
-    if (relay1.config == 0)
-    {
+    if (relay1.config == 0) {
       buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(1,3)\" type=\"button\">MANUAL</button>";
-      if (relay1.relayState == "OFF")
-      {
+      if (relay1.relayState == "OFF") {
         buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(1,5)\" type=\"button\">ON</button>";
         buttons += "<select class=\"form-select m-sm-1\" id=\"1\" aria-label=\"Default select example\"><option value=\"0\" selected>Select</option><option value=\"5\">05 Minutes</option><option value=\"10\">10 Minutes</option><option value=\"30\">30 Minutes</option></select><button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(1,2)\" type=\"button\">Choose Time</button>";
-      }
-      else
+      } else
         buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(1,4)\" type=\"button\">OFF</button><button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(1,6)\" type= \"button\">Power Save ON</button>";
-    }
-    else if (relay1.config == 1)
+    } else if (relay1.config == 1)
       buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(1,1)\" type=\"button\">AUTO</button>";
-    else if (relay1.config == 2)
-    {
+    else if (relay1.config == 2) {
       String timeOn;
       String timeOff;
       byte minOn = (relay1.psTimerDelayOn / 1000) / 60;
@@ -462,8 +389,8 @@ String processor(const String &var)
       buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(1,7)\" type=\"button\">POWER SAVER OFF</button>\
       <hr>\
               <div class=\"row\">\
-                <div class=\"col-sm-6\"><span>ON: " +
-                 timeOn + "</span>\
+                <div class=\"col-sm-6\"><span>ON: "
+                 + timeOn + "</span>\
                   <select class=\"form-select m-sm-1\" id=\"1\" aria-label=\"Default select example\">\
                     <option value=\"0\" selected>Select</option>\
                     <option value=\"5\">05 Minutes</option>\
@@ -472,8 +399,8 @@ String processor(const String &var)
                   </select><button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(1,8)\"\
                     type=\"button\">SAVE</button>\
                 </div>\
-                <div class=\"col-sm-6\"><span>OFF: " +
-                 timeOff + "</span>\
+                <div class=\"col-sm-6\"><span>OFF: "
+                 + timeOff + "</span>\
                   <select class=\"form-select m-sm-1\" id=\"11\" aria-label=\"Default select example\">\
                     <option value=\"0\" selected>Select</option>\
                     <option value=\"5\">05 Minutes</option>\
@@ -487,11 +414,9 @@ String processor(const String &var)
     return buttons;
   }
 
-  if (var == "NOTIFICATION1")
-  {
+  if (var == "NOTIFICATION1") {
     String notify = "";
-    if (relay1.autoTimer == 1)
-    {
+    if (relay1.autoTimer == 1) {
       unsigned long milli = millis() - relay1.lastAutoTimer;
       unsigned long remainMilli = relay1.autoTimerDelay - milli;
       int minI = (remainMilli / 1000) / 60;
@@ -508,9 +433,7 @@ String processor(const String &var)
         sec = String(secI);
 
       notify += "TURNING ON IN - " + min + ":" + sec;
-    }
-    else if (relay1.config == 2)
-    {
+    } else if (relay1.config == 2) {
       unsigned long milli = millis() - relay1.pslastTime;
       unsigned long remainMilli = relay1.psTimerDelay - milli;
       int minI = (remainMilli / 1000) / 60;
@@ -527,32 +450,25 @@ String processor(const String &var)
         sec = String(secI);
 
       notify += "POWER SAVER ACTIVE - " + min + ":" + sec;
-    }
-    else if (relay1.config == 1)
+    } else if (relay1.config == 1)
       notify += "AUTOMATIC CONTROL ACTIVE";
     else if (relay1.config == 0)
       notify += "MANUAL CONTROL";
     return notify;
   }
 
-  if (var == "BUTTONGROUP2")
-  {
+  if (var == "BUTTONGROUP2") {
     String buttons = "";
-    if (relay2.config == 0)
-    {
+    if (relay2.config == 0) {
       buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(2,3)\" type=\"button\">MANUAL</button>";
-      if (relay2.relayState == "OFF")
-      {
+      if (relay2.relayState == "OFF") {
         buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(2,5)\" type=\"button\">ON</button>";
         buttons += "<select class=\"form-select m-sm-1\" id=\"2\" aria-label=\"Default select example\"><option value=\"0\" selected>Select</option><option value=\"5\">05 Minutes</option><option value=\"10\">10 Minutes</option><option value=\"30\">30 Minutes</option></select><button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(2,2)\" type=\"button\">Choose Time</button>";
-      }
-      else
+      } else
         buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(2,4)\" type=\"button\">OFF</button> <button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(2,6)\" type=\"button\">Power Save ON</button>";
-    }
-    else if (relay2.config == 1)
+    } else if (relay2.config == 1)
       buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(2,1)\" type=\"button\">AUTO</button>";
-    else if (relay2.config == 2)
-    {
+    else if (relay2.config == 2) {
       String timeOn;
       String timeOff;
       byte minOn = (relay2.psTimerDelayOn / 1000) / 60;
@@ -562,8 +478,8 @@ String processor(const String &var)
       buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(2,7)\" type=\"button\">POWER SAVER OFF</button>\
       <hr>\
               <div class=\"row\">\
-                <div class=\"col-sm-6\"><span>ON: " +
-                 timeOn + "</span>\
+                <div class=\"col-sm-6\"><span>ON: "
+                 + timeOn + "</span>\
                   <select class=\"form-select m-sm-1\" id=\"2\" aria-label=\"Default select example\">\
                     <option value=\"0\" selected>Select</option>\
                     <option value=\"5\">05 Minutes</option>\
@@ -572,8 +488,8 @@ String processor(const String &var)
                   </select><button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(2,8)\"\
                     type=\"button\">SAVE</button>\
                 </div>\
-                <div class=\"col-sm-6\"><span>OFF: " +
-                 timeOff + "</span>\
+                <div class=\"col-sm-6\"><span>OFF: "
+                 + timeOff + "</span>\
                   <select class=\"form-select m-sm-1\" id=\"22\" aria-label=\"Default select example\">\
                     <option value=\"0\" selected>Select</option>\
                     <option value=\"5\">05 Minutes</option>\
@@ -587,11 +503,9 @@ String processor(const String &var)
     return buttons;
   }
 
-  if (var == "NOTIFICATION2")
-  {
+  if (var == "NOTIFICATION2") {
     String notify = "";
-    if (relay2.autoTimer == 1)
-    {
+    if (relay2.autoTimer == 1) {
       unsigned long milli = millis() - relay2.lastAutoTimer;
       unsigned long remainMilli = relay2.autoTimerDelay - milli;
       int minI = (remainMilli / 1000) / 60;
@@ -608,9 +522,7 @@ String processor(const String &var)
         sec = String(secI);
 
       notify += "TURNING ON IN - " + min + ":" + sec;
-    }
-    else if (relay2.config == 2)
-    {
+    } else if (relay2.config == 2) {
       unsigned long milli = millis() - relay2.pslastTime;
       unsigned long remainMilli = relay2.psTimerDelay - milli;
       int minI = (remainMilli / 1000) / 60;
@@ -627,32 +539,25 @@ String processor(const String &var)
         sec = String(secI);
 
       notify += "POWER SAVER ACTIVE - " + min + ":" + sec;
-    }
-    else if (relay2.config == 1)
+    } else if (relay2.config == 1)
       notify += "AUTOMATIC CONTROL ACTIVE";
     else if (relay2.config == 0)
       notify += "MANUAL CONTROL";
     return notify;
   }
 
-  if (var == "BUTTONGROUP3")
-  {
+  if (var == "BUTTONGROUP3") {
     String buttons = "";
-    if (relay3.config == 0)
-    {
+    if (relay3.config == 0) {
       buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(3,3)\" type=\"button\">MANUAL</button>";
-      if (relay3.relayState == "OFF")
-      {
+      if (relay3.relayState == "OFF") {
         buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(3,5)\" type=\"button\">ON</button>";
         buttons += "<select class=\"form-select m-sm-1\" id=\"3\" aria-label=\"Default select example\"><option value=\"0\" selected>Select</option><option value=\"5\">05 Minutes</option><option value=\"10\">10 Minutes</option><option value=\"30\">30 Minutes</option></select><button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(3,2)\" type=\"button\">Choose Time</button>";
-      }
-      else
+      } else
         buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(3,4)\" type=\"button\">OFF</button> <button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(3,6)\" type= \"button\">Power Save ON</button>";
-    }
-    else if (relay3.config == 1)
+    } else if (relay3.config == 1)
       buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(3,1)\" type=\"button\">AUTO</button>";
-    else if (relay3.config == 2)
-    {
+    else if (relay3.config == 2) {
       String timeOn;
       String timeOff;
       byte minOn = (relay3.psTimerDelayOn / 1000) / 60;
@@ -662,8 +567,8 @@ String processor(const String &var)
       buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(3,7)\" type=\"button\">POWER SAVER OFF</button>\
       <hr>\
               <div class=\"row\">\
-                <div class=\"col-sm-6\"><span>ON: " +
-                 timeOn + "</span>\
+                <div class=\"col-sm-6\"><span>ON: "
+                 + timeOn + "</span>\
                   <select class=\"form-select m-sm-1\" id=\"3\" aria-label=\"Default select example\">\
                     <option value=\"0\" selected>Select</option>\
                     <option value=\"5\">05 Minutes</option>\
@@ -672,8 +577,8 @@ String processor(const String &var)
                   </select><button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(3,8)\"\
                     type=\"button\">SAVE</button>\
                 </div>\
-                <div class=\"col-sm-6\"><span>OFF: " +
-                 timeOff + "</span>\
+                <div class=\"col-sm-6\"><span>OFF: "
+                 + timeOff + "</span>\
                   <select class=\"form-select m-sm-1\" id=\"33\" aria-label=\"Default select example\">\
                     <option value=\"0\" selected>Select</option>\
                     <option value=\"5\">05 Minutes</option>\
@@ -687,11 +592,9 @@ String processor(const String &var)
     return buttons;
   }
 
-  if (var == "NOTIFICATION3")
-  {
+  if (var == "NOTIFICATION3") {
     String notify = "";
-    if (relay3.autoTimer == 1)
-    {
+    if (relay3.autoTimer == 1) {
       unsigned long milli = millis() - relay3.lastAutoTimer;
       unsigned long remainMilli = relay3.autoTimerDelay - milli;
       int minI = (remainMilli / 1000) / 60;
@@ -708,9 +611,7 @@ String processor(const String &var)
         sec = String(secI);
 
       notify += "TURNING ON IN - " + min + ":" + sec;
-    }
-    else if (relay3.config == 2)
-    {
+    } else if (relay3.config == 2) {
       unsigned long milli = millis() - relay3.pslastTime;
       unsigned long remainMilli = relay3.psTimerDelay - milli;
       int minI = (remainMilli / 1000) / 60;
@@ -727,30 +628,23 @@ String processor(const String &var)
         sec = String(secI);
 
       notify += "POWER SAVER ACTIVE - " + min + ":" + sec;
-    }
-    else if (relay3.config == 1)
+    } else if (relay3.config == 1)
       notify += "AUTOMATIC CONTROL ACTIVE";
     else if (relay3.config == 0)
       notify += "MANUAL CONTROL";
     return notify;
   }
 
-  if (var == "BUTTONGROUP4")
-  {
+  if (var == "BUTTONGROUP4") {
     String buttons = "";
-    if (relay4.config == 0)
-    {
+    if (relay4.config == 0) {
       buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(4,3)\" type=\"button\">MANUAL</button>";
-      if (relay4.relayState == "OFF")
-      {
+      if (relay4.relayState == "OFF") {
         buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(4,5)\" type=\"button\">ON</button>";
         buttons += "<select class=\"form-select m-sm-1\" id=\"4\" aria-label=\"Default select example\"><option value=\"0\" selected>Select</option><option value=\"5\">05 Minutes</option><option value=\"10\">10 Minutes</option><option value=\"30\">30 Minutes</option></select><button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(4,2)\" type=\"button\">Choose Time</button>";
-      }
-      else
+      } else
         buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(4,4)\" type=\"button\">OFF</button><button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(4,6)\" type=\"button\">Power Save ON</button>";
-    }
-    else if (relay4.config == 1)
-    {
+    } else if (relay4.config == 1) {
       String timeOn;
       String timeOff;
 
@@ -781,20 +675,18 @@ String processor(const String &var)
       buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(4,1)\" type=\"button\">AUTO</button>\
         <hr>\
               <div class=\"row\">\
-                <div class=\"col-sm-6\"><span>ON: " +
-                 timeOn + "</span>\
+                <div class=\"col-sm-6\"><span>ON: "
+                 + timeOn + "</span>\
                   <input type=\"time\"  class=\"form-control\" id=\"appt\" name=\"appt\" min=\"00:00\" max=\"23:00\" required>\
                   <button class=\"btn btn-secondary m-1\" onclick=\"\" type=\"button\">SAVE</button>\
                 </div>\
-                <div class=\"col-sm-6\"><span>OFF: " +
-                 timeOff + "</span>\
+                <div class=\"col-sm-6\"><span>OFF: "
+                 + timeOff + "</span>\
                   <input type=\"time\"  class=\"form-control\" id=\"appt\" name=\"appt\" min=\"00:00\" max=\"23:00\" required>\
                   <button class=\"btn btn-secondary m-1\" onclick=\"\" type=\"button\">SAVE</button>\
                 </div>\
               </div>";
-    }
-    else if (relay4.config == 2)
-    {
+    } else if (relay4.config == 2) {
       String timeOn;
       String timeOff;
       byte minOn = (relay4.psTimerDelayOn / 1000) / 60;
@@ -804,8 +696,8 @@ String processor(const String &var)
       buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(4,7)\" type=\"button\">POWER SAVER OFF</button>\
       <hr>\
               <div class=\"row\">\
-                <div class=\"col-sm-6\"><span>ON: " +
-                 timeOn + "</span>\
+                <div class=\"col-sm-6\"><span>ON: "
+                 + timeOn + "</span>\
                   <select class=\"form-select m-sm-1\" id=\"4\" aria-label=\"Default select example\">\
                     <option value=\"0\" selected>Select</option>\
                     <option value=\"5\">05 Minutes</option>\
@@ -814,8 +706,8 @@ String processor(const String &var)
                   </select><button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(4,8)\"\
                     type=\"button\">SAVE</button>\
                 </div>\
-                <div class=\"col-sm-6\"><span>OFF: " +
-                 timeOff + "</span>\
+                <div class=\"col-sm-6\"><span>OFF: "
+                 + timeOff + "</span>\
                   <select class=\"form-select m-sm-1\" id=\"44\" aria-label=\"Default select example\">\
                     <option value=\"0\" selected>Select</option>\
                     <option value=\"5\">05 Minutes</option>\
@@ -829,11 +721,9 @@ String processor(const String &var)
     return buttons;
   }
 
-  if (var == "NOTIFICATION4")
-  {
+  if (var == "NOTIFICATION4") {
     String notify = "";
-    if (relay4.autoTimer == 1)
-    {
+    if (relay4.autoTimer == 1) {
       unsigned long milli = millis() - relay4.lastAutoTimer;
       unsigned long remainMilli = relay4.autoTimerDelay - milli;
       int minI = (remainMilli / 1000) / 60;
@@ -850,9 +740,7 @@ String processor(const String &var)
         sec = String(secI);
 
       notify += "TURNING ON IN - " + min + ":" + sec;
-    }
-    else if (relay4.config == 2)
-    {
+    } else if (relay4.config == 2) {
       unsigned long milli = millis() - relay4.pslastTime;
       unsigned long remainMilli = relay4.psTimerDelay - milli;
       int minI = (remainMilli / 1000) / 60;
@@ -869,32 +757,27 @@ String processor(const String &var)
         sec = String(secI);
 
       notify += "POWER SAVER ACTIVE - " + min + ":" + sec;
-    }
-    else if (relay4.config == 1)
+    } else if (relay4.config == 1)
       notify += "AUTOMATIC CONTROL ACTIVE";
     else if (relay4.config == 0)
       notify += "MANUAL CONTROL";
     return notify;
   }
 
-  if (var == "BUTTONGROUP5")
-  {
+  if (var == "BUTTONGROUP5") {
     String buttons = "";
-    if (OLEDConfig == 0)
-    {
+    if (OLEDConfig == 0) {
       buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(5,1)\" type=\"button\">MANUAL</button>";
       if (OLEDStatus == 0)
         buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(5,5)\" type=\"button\">OFF</button>";
       else
         buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(5,4)\" type=\"button\">ON</button>";
-    }
-    else
+    } else
       buttons += "<button class=\"btn btn-secondary m-1\" onclick=\"sendButtState(5,3)\" type=\"button\">AUTO</button>";
     return buttons;
   }
 
-  if (var == "NOTIFICATION5")
-  {
+  if (var == "NOTIFICATION5") {
     String notify = "";
     if (OLEDConfig == 0)
       notify += "MANUAL CONTROL";
@@ -903,16 +786,14 @@ String processor(const String &var)
     return notify;
   }
   //*****************************BUTTONS END**************************
-  if (var == "TIMEDAY")
-  {
+  if (var == "TIMEDAY") {
     String timeData = "";
     timeData += "<p class=\"card-text\" id=\"time\">" + String(Clock.getHour(h12Flag, pmFlag)) + ":" + String(Clock.getMinute()) + ", " + String(Clock.getDate()) + "/" + String(Clock.getMonth(century)) + "/" + String(Clock.getYear()) + ", " + String(week[Clock.getDoW()]) + ", " + String(int(Clock.getTemperature())) + "&deg;C</p>";
     return timeData;
   }
 
   //*****************************STATUS BEGIN**************************
-  if (var == "STATE1")
-  {
+  if (var == "STATE1") {
     String state = "";
     if (relay1.relayState == "OFF")
       state += "<h1 class=\"cardOff\">" + relay1.relayState + "</h1>";
@@ -920,8 +801,7 @@ String processor(const String &var)
       state += "<h1 class=\"cardOn\">" + relay1.relayState + "</h1>";
     return state;
   }
-  if (var == "STATE2")
-  {
+  if (var == "STATE2") {
     String state = "";
     if (relay2.relayState == "OFF")
       state += "<h1 class=\"cardOff\">" + relay2.relayState + "</h1>";
@@ -929,8 +809,7 @@ String processor(const String &var)
       state += "<h1 class=\"cardOn\">" + relay2.relayState + "</h1>";
     return state;
   }
-  if (var == "STATE3")
-  {
+  if (var == "STATE3") {
     String state = "";
     if (relay3.relayState == "OFF")
       state += "<h1 class=\"cardOff\">" + relay3.relayState + "</h1>";
@@ -938,8 +817,7 @@ String processor(const String &var)
       state += "<h1 class=\"cardOn\">" + relay3.relayState + "</h1>";
     return state;
   }
-  if (var == "STATE4")
-  {
+  if (var == "STATE4") {
     String state = "";
     if (relay4.relayState == "OFF")
       state += "<h1 class=\"cardOff\">" + relay4.relayState + "</h1>";
@@ -947,8 +825,7 @@ String processor(const String &var)
       state += "<h1 class=\"cardOn\">" + relay4.relayState + "</h1>";
     return state;
   }
-  if (var == "STATE5")
-  {
+  if (var == "STATE5") {
     String state = "";
     if (OLEDStatus == 0)
       state += "<h1 class=\"cardOff\">OFF</h1>";
@@ -956,26 +833,22 @@ String processor(const String &var)
       state += "<h1 class=\"cardOn\">ON</h1>";
     return state;
   }
-  if (var == "NAME1")
-  {
+  if (var == "NAME1") {
     String name = "";
     name += relay1Name;
     return name;
   }
-  if (var == "NAME2")
-  {
+  if (var == "NAME2") {
     String name = "";
     name += relay2Name;
     return name;
   }
-  if (var == "NAME3")
-  {
+  if (var == "NAME3") {
     String name = "";
     name += relay3Name;
     return name;
   }
-  if (var == "NAME4")
-  {
+  if (var == "NAME4") {
     String name = "";
     name += relay4Name;
     return name;
@@ -1228,7 +1101,7 @@ function updateTime(){
     }}
   </script>
   <script>
-    var week = ["Monday", "Tueday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday"]
+    var week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday","Sunday"]
     function everyTime() {
       var xhr = new XMLHttpRequest();
       xhr.open("GET", "/time?state=1", true);
@@ -1310,19 +1183,15 @@ function updateTime(){
 </html>
 )rawliteral";
 
-void setup()
-{
+void setup() {
   // Serial port for debugging purposes
   Serial.begin(115200);
 
   bool success = SPIFFS.begin();
-  SPIFFS.gc(); // garbage collection
-  if (success)
-  {
+  SPIFFS.gc();  // garbage collection
+  if (success) {
     Serial.println("File system mounted with success");
-  }
-  else
-  {
+  } else {
     Serial.println("Error mounting the file system");
     return;
   }
@@ -1330,8 +1199,7 @@ void setup()
   Wire.begin();
 
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
-  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS))
-  {
+  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
     Serial.println(F("SSD1306 allocation failed"));
     delay(3000);
     // ESP.restart();
@@ -1342,33 +1210,31 @@ void setup()
   delay(1000);
 
   display.clearDisplay();
-  display.setCursor(30, 25);   // Start at top-left corner
-  display.setTextSize(1);      // Normal 1:1 pixel scale
-  display.setTextColor(WHITE); // Draw white text
+  display.setCursor(30, 25);    // Start at top-left corner
+  display.setTextSize(1);       // Normal 1:1 pixel scale
+  display.setTextColor(WHITE);  // Draw white text
 
   display.println(F("Connecting..."));
   display.display();
   // Configures static IP address
-  if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS))
-  {
+  if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
     Serial.println("STA Failed to configure");
   }
 
   // Connect to Wi-Fi network with SSID and password
   Serial.print("Connecting to ");
   Serial.println(ssid);
-  WiFi.hostname(newHostname.c_str()); // Set new hostname
+  WiFi.hostname(newHostname.c_str());  // Set new hostname
   WiFi.begin(ssid, password);
 
   /*
   count variable stores the status of WiFi connection. 1 means NOT CONNECTED. 0 means CONNECTED
   */
   int count = 0;
-  while (WiFi.waitForConnectResult() != WL_CONNECTED)
-  {
+  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
     display.clearDisplay();
     display.setTextSize(2);
-    display.setCursor(0, 0); // Start at top-left corner
+    display.setCursor(0, 0);  // Start at top-left corner
     display.println(F("Connection\n\nFailed!"));
     Serial.println("Connection Failed");
     display.display();
@@ -1378,8 +1244,7 @@ void setup()
     break;
   }
   // OTA UPDATE SETTINGS  !! CAUTION !! PROCEED WITH PRECAUTION
-  ArduinoOTA.onStart([]()
-                     {
+  ArduinoOTA.onStart([]() {
     String type;
     if (ArduinoOTA.getCommand() == U_FLASH) {
       type = "sketch";
@@ -1396,16 +1261,16 @@ void setup()
     display.print("Type: ");
     display.print(type);
     display.display();
-    delay(1000); });
-  ArduinoOTA.onEnd([]()
-                   {
+    delay(1000);
+  });
+  ArduinoOTA.onEnd([]() {
     display.clearDisplay();
     display.setTextSize(2);
     display.setCursor(15, 25);  // Start at top-left corner
     display.println(F("Rebooting"));
-    display.display(); });
-  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total)
-                        {
+    display.display();
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
     display.clearDisplay();
     display.setTextSize(2);
     display.setCursor(0, 10);  // Start at top-left corner
@@ -1414,10 +1279,10 @@ void setup()
     display.print((progress / (total / 100)));
     display.setCursor(88, 35);
     display.print("%");
-    display.display(); });
+    display.display();
+  });
 
-  ArduinoOTA.onError([](ota_error_t error)
-                     {
+  ArduinoOTA.onError([](ota_error_t error) {
     display.clearDisplay();
     display.setTextSize(2);
     display.setCursor(0, 10);  // Start at top-left corner
@@ -1454,16 +1319,16 @@ void setup()
       display.setCursor(0, 10);  // Start at top-left corner
       display.print("End Failed");
       display.display();
-    } });
+    }
+  });
   ArduinoOTA.begin();
   // OTA UPDATE END
 
   // checks if wifi connected
-  if (count == 0)
-  {
+  if (count == 0) {
     display.clearDisplay();
     display.setTextSize(2);
-    display.setCursor(0, 0); // Start at top-left corner
+    display.setCursor(0, 0);  // Start at top-left corner
     display.println(F("Connected!"));
     Serial.println("Connected WIFI");
     display.setTextSize(1);
@@ -1476,11 +1341,10 @@ void setup()
     display.clearDisplay();
     display.setCursor(0, 0);
 
-    timeClient.begin(); // NTP time
+    timeClient.begin();  // NTP time
     bool x = timeClient.update();
 
-    if (x == false)
-    {
+    if (x == false) {
       display.println(F("Failed Time Client"));
       Serial.println("Failed Time Client");
       display.display();
@@ -1503,12 +1367,12 @@ void setup()
   display.setCursor(0, 0);
 
   // Route for root / web page
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send_P(200, "text/html", index_html, processor); });
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send_P(200, "text/html", index_html, processor);
+  });
 
   // Send a GET request to <ESP_IP>/apiButt?count=<inputMessage1>&code=<inputMessage2>
-  server.on("/apiButt", HTTP_GET, [](AsyncWebServerRequest *request)
-            {
+  server.on("/apiButt", HTTP_GET, [](AsyncWebServerRequest *request) {
     String inputMessage1, inputMessage2, inputMessage3;
     int relay = 0, button = 0, value = 0;
     // GET input1 value on <ESP_IP>/apiButt?count=<inputMessage1>&code=<inputMessage2>
@@ -1652,11 +1516,11 @@ void setup()
     } else if (relay == 4 && button == 7)
       relay4.config = 1;  // revert to auto
     //***************************************************
-    request->send(200, "text/plain", "OK"); });
+    request->send(200, "text/plain", "OK");
+  });
 
   // Send a TIME request to <ESP_IP>/time?state=<inputMessage1>
-  server.on("/time", HTTP_GET, [](AsyncWebServerRequest *request)
-            {
+  server.on("/time", HTTP_GET, [](AsyncWebServerRequest *request) {
     String inputMessage1;
     // GET input1 value on <ESP_IP>/time?state=<inputMessage1>
     if (request->hasParam(PARAM_INPUT_3)) {
@@ -1667,11 +1531,11 @@ void setup()
         request->send(200, "text/plain", y);
       }
     } else
-      inputMessage1 = "No message sent"; });
+      inputMessage1 = "No message sent";
+  });
 
   // Send an update time request to <ESP_IP>/updateTime?state=<inputMessage1>
-  server.on("/updateTime", HTTP_GET, [](AsyncWebServerRequest *request)
-            {
+  server.on("/updateTime", HTTP_GET, [](AsyncWebServerRequest *request) {
     String inputMessage1;
     int x;
     // <ESP_IP>/updateTime?state=<inputMessage1>
@@ -1682,26 +1546,26 @@ void setup()
     if (x == 1) {
       updateTime = 1;
     }
-    request->send(200, "text/plain", "Time will be updated. ID: " + String(x)); });
+    request->send(200, "text/plain", "Time will be updated. ID: " + String(x));
+  });
 
   // Send an update time request to <ESP_IP>/updateTime?state=<inputMessage1>
-  server.on("/codeUpdate", HTTP_GET, [](AsyncWebServerRequest *request)
-            {
+  server.on("/codeUpdate", HTTP_GET, [](AsyncWebServerRequest *request) {
     String inputMessage1, data = "";
     // <ESP_IP>/updateTime?state=<inputMessage1>
     if (request->hasParam(PARAM_INPUT_3)) {
       inputMessage1 = request->getParam(PARAM_INPUT_3)->value();
       data = processor(inputMessage1);
     }
-    request->send(200, "text/plain", data); });
+    request->send(200, "text/plain", data);
+  });
 
   // Start server
   server.begin();
 
   // REMOVE this section if you don't want to broadcast time data to other ESPs ############################################
   //  Init ESP-NOW
-  if (esp_now_init() != 0)
-  {
+  if (esp_now_init() != 0) {
     display.println(F("Error in ESP-NOW"));
     Serial.println("Error ESP NOW");
     display.display();
@@ -1738,15 +1602,13 @@ void setup()
   Serial.println("Entering Main LOOP");
 }
 
-void loop()
-{
+void loop() {
 
   ArduinoOTA.handle();
   //****************************************RELAY POWERSAVE FEATURE********************************
   // RELAY 1
-  if (relay1.powerSave == 1)
-  {
-    relay1.psTimerDelay = relay1.psTimerDelayOn; // 10 mins
+  if (relay1.powerSave == 1) {
+    relay1.psTimerDelay = relay1.psTimerDelayOn;  // 10 mins
     relay1.pslastTime = millis();
     RELAY1ON;
     relay1.powerSave = 0;
@@ -1757,10 +1619,8 @@ void loop()
     relay1.config = 2;
   }
 
-  if (relay1.psAlt == 1 && relay1.config == 2)
-  {
-    if ((millis() - relay1.pslastTime) > relay1.psTimerDelay)
-    {
+  if (relay1.psAlt == 1 && relay1.config == 2) {
+    if ((millis() - relay1.pslastTime) > relay1.psTimerDelay) {
       RELAY1OFF;
       relay1.psAlt = 0;
       relay1.psTimerDelay = relay1.psTimerDelayOff;
@@ -1769,11 +1629,8 @@ void loop()
       relay1.flag = 0;
       relay1.relayState = "OFF";
     }
-  }
-  else if (relay1.psAlt == 0 && relay1.config == 2)
-  {
-    if ((millis() - relay1.pslastTime) > relay1.psTimerDelay)
-    {
+  } else if (relay1.psAlt == 0 && relay1.config == 2) {
+    if ((millis() - relay1.pslastTime) > relay1.psTimerDelay) {
       RELAY1ON;
       relay1.psAlt = 1;
       relay1.psTimerDelay = relay1.psTimerDelayOn;
@@ -1785,8 +1642,7 @@ void loop()
   }
 
   // RELAY 2
-  if (relay2.powerSave == 1)
-  {
+  if (relay2.powerSave == 1) {
     relay2.psTimerDelay = relay2.psTimerDelayOn;
     relay2.pslastTime = millis();
     RELAY2ON;
@@ -1798,10 +1654,8 @@ void loop()
     relay2.config = 2;
   }
 
-  if (relay2.psAlt == 1 && relay2.config == 2)
-  {
-    if ((millis() - relay2.pslastTime) > relay2.psTimerDelay)
-    {
+  if (relay2.psAlt == 1 && relay2.config == 2) {
+    if ((millis() - relay2.pslastTime) > relay2.psTimerDelay) {
       RELAY2OFF;
       relay2.psAlt = 0;
       relay2.psTimerDelay = relay2.psTimerDelayOff;
@@ -1810,11 +1664,8 @@ void loop()
       relay2.flag = 0;
       relay2.relayState = "OFF";
     }
-  }
-  else if (relay2.psAlt == 0 && relay2.config == 2)
-  {
-    if ((millis() - relay2.pslastTime) > relay2.psTimerDelay)
-    {
+  } else if (relay2.psAlt == 0 && relay2.config == 2) {
+    if ((millis() - relay2.pslastTime) > relay2.psTimerDelay) {
       RELAY2ON;
       relay2.psAlt = 1;
       relay2.psTimerDelay = relay2.psTimerDelayOn;
@@ -1826,8 +1677,7 @@ void loop()
   }
 
   // RELAY 3
-  if (relay3.powerSave == 1)
-  {
+  if (relay3.powerSave == 1) {
     relay3.psTimerDelay = relay3.psTimerDelayOn;
     relay3.pslastTime = millis();
     RELAY3ON;
@@ -1839,10 +1689,8 @@ void loop()
     relay3.config = 2;
   }
 
-  if (relay3.psAlt == 1 && relay3.config == 2)
-  {
-    if ((millis() - relay3.pslastTime) > relay3.psTimerDelay)
-    {
+  if (relay3.psAlt == 1 && relay3.config == 2) {
+    if ((millis() - relay3.pslastTime) > relay3.psTimerDelay) {
       RELAY3OFF;
       relay3.psAlt = 0;
       relay3.psTimerDelay = relay3.psTimerDelayOff;
@@ -1851,11 +1699,8 @@ void loop()
       relay3.flag = 0;
       relay3.relayState = "OFF";
     }
-  }
-  else if (relay3.psAlt == 0 && relay3.config == 2)
-  {
-    if ((millis() - relay3.pslastTime) > relay3.psTimerDelay)
-    {
+  } else if (relay3.psAlt == 0 && relay3.config == 2) {
+    if ((millis() - relay3.pslastTime) > relay3.psTimerDelay) {
       RELAY3ON;
       relay3.psAlt = 1;
       relay3.psTimerDelay = relay3.psTimerDelayOn;
@@ -1867,8 +1712,7 @@ void loop()
   }
 
   // RELAY 4
-  if (relay4.powerSave == 1)
-  {
+  if (relay4.powerSave == 1) {
     relay4.psTimerDelay = relay4.psTimerDelayOn;
     relay4.pslastTime = millis();
     RELAY4ON;
@@ -1880,10 +1724,8 @@ void loop()
     relay4.config = 2;
   }
 
-  if (relay4.psAlt == 1 && relay4.config == 2)
-  {
-    if ((millis() - relay4.pslastTime) > relay4.psTimerDelay)
-    {
+  if (relay4.psAlt == 1 && relay4.config == 2) {
+    if ((millis() - relay4.pslastTime) > relay4.psTimerDelay) {
       RELAY4OFF;
       relay4.psAlt = 0;
       relay4.psTimerDelay = relay4.psTimerDelayOff;
@@ -1892,11 +1734,8 @@ void loop()
       relay4.flag = 0;
       relay4.relayState = "OFF";
     }
-  }
-  else if (relay4.psAlt == 0 && relay4.config == 2)
-  {
-    if ((millis() - relay4.pslastTime) > relay4.psTimerDelay)
-    {
+  } else if (relay4.psAlt == 0 && relay4.config == 2) {
+    if ((millis() - relay4.pslastTime) > relay4.psTimerDelay) {
       RELAY4ON;
       relay4.psAlt = 1;
       relay4.psTimerDelay = relay4.psTimerDelayOn;
@@ -1908,8 +1747,7 @@ void loop()
   }
   //**************************************END RELAY POWER SAVE FEATURE****************************************
 
-  if (updateTime == 1)
-  {
+  if (updateTime == 1) {
     updateRTC();
     updateTime = 0;
   }
@@ -1917,46 +1755,29 @@ void loop()
   display.clearDisplay();
 
   // checking timers for relays
-  if ((millis() - lastTime) > timerDelay)
-  {
+  if ((millis() - lastTime) > timerDelay) {
 
-    if (relay1.config == 0)
-    {
-    }
-    else if (relay1.config == 1)
-    {
-      if (relay1.activate)
-      {
+    if (relay1.config == 0) {
+    } else if (relay1.config == 1) {
+      if (relay1.activate) {
         checkTimeFor(relay1.onTime, relay1.offTime, relay1.count);
       }
     }
-    if (relay2.config == 0)
-    {
-    }
-    else if (relay2.config == 1)
-    {
-      if (relay2.activate)
-      {
+    if (relay2.config == 0) {
+    } else if (relay2.config == 1) {
+      if (relay2.activate) {
         checkTimeFor(relay2.onTime, relay2.offTime, relay2.count);
       }
     }
-    if (relay3.config == 0)
-    {
-    }
-    else if (relay3.config == 1)
-    {
-      if (relay3.activate)
-      {
+    if (relay3.config == 0) {
+    } else if (relay3.config == 1) {
+      if (relay3.activate) {
         checkTimeFor(relay3.onTime, relay3.offTime, relay3.count);
       }
     }
-    if (relay4.config == 0)
-    {
-    }
-    else if (relay4.config == 1)
-    {
-      if (relay4.activate)
-      {
+    if (relay4.config == 0) {
+    } else if (relay4.config == 1) {
+      if (relay4.activate) {
         checkTimeFor(relay4.onTime, relay4.offTime, relay4.count);
       }
     }
@@ -1964,40 +1785,32 @@ void loop()
   }
 
   // autoTimer checkings
-  if (relay1.autoTimer == 1)
-  {
-    if ((millis() - relay1.lastAutoTimer) > relay1.autoTimerDelay)
-    {
+  if (relay1.autoTimer == 1) {
+    if ((millis() - relay1.lastAutoTimer) > relay1.autoTimerDelay) {
       relay1.flag = 1;
       RELAY1ON;
       relay1.relayState = "ON";
       relay1.autoTimer = 0;
     }
   }
-  if (relay2.autoTimer == 1)
-  {
-    if ((millis() - relay2.lastAutoTimer) > relay2.autoTimerDelay)
-    {
+  if (relay2.autoTimer == 1) {
+    if ((millis() - relay2.lastAutoTimer) > relay2.autoTimerDelay) {
       relay2.flag = 1;
       RELAY2ON;
       relay2.relayState = "ON";
       relay2.autoTimer = 0;
     }
   }
-  if (relay3.autoTimer == 1)
-  {
-    if ((millis() - relay3.lastAutoTimer) > relay3.autoTimerDelay)
-    {
+  if (relay3.autoTimer == 1) {
+    if ((millis() - relay3.lastAutoTimer) > relay3.autoTimerDelay) {
       relay3.flag = 1;
       RELAY3ON;
       relay3.relayState = "ON";
       relay3.autoTimer = 0;
     }
   }
-  if (relay4.autoTimer == 1)
-  {
-    if ((millis() - relay4.lastAutoTimer) > relay4.autoTimerDelay)
-    {
+  if (relay4.autoTimer == 1) {
+    if ((millis() - relay4.lastAutoTimer) > relay4.autoTimerDelay) {
       relay4.flag = 1;
       RELAY4ON;
       relay4.relayState = "ON";
@@ -2006,50 +1819,37 @@ void loop()
   }
 
   // checking wifi strength
-  if ((millis() - lastTime1) > timerDelay1)
-  {
-    if (OLEDStatus)
-    {
+  if ((millis() - lastTime1) > timerDelay1) {
+    server.begin();
+    if (OLEDStatus) {
       showTime();
-      showWifiSignal(); // at (112,0), wifi sampling once in 900 m.seconds
+      showWifiSignal();  // at (112,0), wifi sampling once in 900 m.seconds
       relayStatusPrinter();
     }
-    if (OLEDConfig == 0) // Automatic/Manual Control of OLED Display
+    if (OLEDConfig == 0)  // Automatic/Manual Control of OLED Display
     {
-      if (OLEDStatus == 0)
-      {
+      if (OLEDStatus == 0) {
         display.clearDisplay();
         display.display();
-      }
-      else
+      } else
         display.display();
-    }
-    else if (OLEDConfig == 1)
-    {
-      byte currTime = Clock.getHour(h12Flag, pmFlag); // stores current hour temporarily
-      if (OLED_OFF > OLED_ON)
-      {
-        if ((currTime >= OLED_ON) && (currTime <= OLED_OFF))
-        {
+    } else if (OLEDConfig == 1) {
+      byte currTime = Clock.getHour(h12Flag, pmFlag);  // stores current hour temporarily
+      if (OLED_OFF > OLED_ON) {
+        if ((currTime >= OLED_ON) && (currTime <= OLED_OFF)) {
           display.display();
           OLEDStatus = 1;
-        }
-        else
-        {
+        } else {
           OLEDStatus = 0;
           display.clearDisplay();
           display.display();
         }
-      }
-      else
-      {
-        if (((currTime >= OLED_ON) && (currTime >= OLED_OFF)) || ((currTime <= OLED_ON) && (currTime <= OLED_OFF))) // oled display turn of at night
+      } else {
+        if (((currTime >= OLED_ON) && (currTime >= OLED_OFF)) || ((currTime <= OLED_ON) && (currTime <= OLED_OFF)))  // oled display turn of at night
         {
           display.display();
           OLEDStatus = 1;
-        }
-        else
-        {
+        } else {
           OLEDStatus = 0;
           display.clearDisplay();
           display.display();
@@ -2062,8 +1862,7 @@ void loop()
 
   // REMOVE this section if you don't want to broadcast time data to other ESPs ############################################
   //  ESP NOW Send time
-  if ((millis() - lastTime2) > timerDelay2)
-  {
+  if ((millis() - lastTime2) > timerDelay2) {
     // Set values to send
     myData.time[0] = Clock.getHour(h12Flag, pmFlag);
     myData.time[1] = Clock.getMinute();
@@ -2085,32 +1884,22 @@ void loop()
 /*
 Displays wifi signal level in form of icons. There are five levels, i.e. worst, poor, good, best, excellent
 */
-void showWifiSignal()
-{
+void showWifiSignal() {
   int x = WiFi.RSSI();
-  if (WiFi.status() != WL_CONNECTED)
-  {
+  if (WiFi.status() != WL_CONNECTED) {
     display.setCursor(112, 0);
     // display.setTextSize(2);
     display.println(F("!"));
-  }
-  else
-  {
-    if (x <= (-80))
+  } else {
+    if (x <= (-80)) {
+      display.drawBitmap(112, 0, wifiLow, 16, 16, WHITE);  // worst signal
+    } else if ((x <= (-70)) && (x > (-80))) {
+      display.drawBitmap(112, 0, wifiHalf, 16, 16, WHITE);  // poor signal
+    } else if ((x <= (-60)) && (x > (-70)))                 // good signal
     {
-      display.drawBitmap(112, 0, wifiLow, 16, 16, WHITE); // worst signal
-    }
-    else if ((x <= (-70)) && (x > (-80)))
-    {
-      display.drawBitmap(112, 0, wifiHalf, 16, 16, WHITE); // poor signal
-    }
-    else if ((x <= (-60)) && (x > (-70))) // good signal
-    {
-      display.drawBitmap(112, 0, wifiMed, 16, 16, WHITE); // best signal
-    }
-    else if (x > (-60))
-    {
-      display.drawBitmap(112, 0, wifiFull, 16, 16, WHITE); // excellent signal
+      display.drawBitmap(112, 0, wifiMed, 16, 16, WHITE);  // best signal
+    } else if (x > (-60)) {
+      display.drawBitmap(112, 0, wifiFull, 16, 16, WHITE);  // excellent signal
     }
   }
 }
@@ -2118,8 +1907,7 @@ void showWifiSignal()
 /*
 Gets current Time from DS3231 RTC and displays it on the Display at designated locations. Also, checks for error in time data due to RTC Reset.
 */
-void showTime()
-{
+void showTime() {
   display.setTextSize(2);
   display.setTextColor(WHITE);
   display.setCursor(0, 0);
@@ -2127,7 +1915,7 @@ void showTime()
   if (Clock.getHour(h12Flag, pmFlag) < 10)
     display.print(0, DEC);
 
-  display.print(Clock.getHour(h12Flag, pmFlag)); // Time
+  display.print(Clock.getHour(h12Flag, pmFlag));  // Time
   display.print(":");
   if (Clock.getMinute() < 10)
     display.print(0, DEC);
@@ -2158,12 +1946,11 @@ void showTime()
 /*
 Gets current EpochTime from timeClient, converts it into Local Time and updates the DS3231 RTC (Y,M,D,W,H,Min,S)
 */
-void updateRTC()
-{
+void updateRTC() {
   display.clearDisplay();
-  display.setCursor(30, 25);   // Start at top-left corner
-  display.setTextSize(1);      // Normal 1:1 pixel scale
-  display.setTextColor(WHITE); // Draw white text
+  display.setCursor(30, 25);    // Start at top-left corner
+  display.setTextSize(1);       // Normal 1:1 pixel scale
+  display.setTextColor(WHITE);  // Draw white text
 
   display.println(F("Updating Time"));
   display.display();
@@ -2191,7 +1978,7 @@ void updateRTC()
 
   uint8_t dow = ti->tm_wday;
 
-  Clock.setClockMode(false); // set to 24h
+  Clock.setClockMode(false);  // set to 24h
   // setClockMode(true); // set to 12h
 
   Clock.setYear(year);
@@ -2206,125 +1993,88 @@ void updateRTC()
 /*
 Timer time checking. Checks for onTime and offTime.
 */
-void checkTimeFor(int onTime, int offTime, int number)
-{
+void checkTimeFor(int onTime, int offTime, int number) {
   int h = Clock.getHour(h12Flag, pmFlag);
   int m = Clock.getMinute();
 
-  int timeString = h * 100 + m; // if h=12 and m=23 then 12*100 + 23 = 1223 hours
+  int timeString = h * 100 + m;  // if h=12 and m=23 then 12*100 + 23 = 1223 hours
 
-  if (offTime > onTime) // when off timing is greater than on timing
+  if (offTime > onTime)  // when off timing is greater than on timing
   {
-    if ((timeString > onTime) && (timeString < offTime))
-    {
-      if (number == 1)
-      {
+    if ((timeString > onTime) && (timeString < offTime)) {
+      if (number == 1) {
         relay1.flag = 1;
         RELAY1ON;
         relay1.relayState = "ON";
         relay1.autoTimer = 0;
-      }
-      else if (number == 2)
-      {
+      } else if (number == 2) {
         relay2.flag = 1;
         RELAY2ON;
         relay2.relayState = "ON";
         relay2.autoTimer = 0;
-      }
-      else if (number == 3)
-      {
+      } else if (number == 3) {
         relay3.flag = 1;
         RELAY3ON;
         relay3.relayState = "ON";
         relay3.autoTimer = 0;
-      }
-      else if (number == 4)
-      {
+      } else if (number == 4) {
         relay4.flag = 1;
         RELAY4ON;
         relay4.relayState = "ON";
         relay4.autoTimer = 0;
       }
-    }
-    else
-    {
-      if (number == 1)
-      {
+    } else {
+      if (number == 1) {
         relay1.flag = 0;
         RELAY1OFF;
         relay1.relayState = "OFF";
-      }
-      else if (number == 2)
-      {
+      } else if (number == 2) {
         relay2.flag = 0;
         RELAY2OFF;
         relay2.relayState = "OFF";
-      }
-      else if (number == 3)
-      {
+      } else if (number == 3) {
         relay3.flag = 0;
         RELAY3OFF;
         relay3.relayState = "OFF";
-      }
-      else if (number == 4)
-      {
+      } else if (number == 4) {
         relay4.flag = 0;
         RELAY4OFF;
         relay4.relayState = "OFF";
       }
     }
-  }
-  else
-  {
-    if (((timeString > onTime) && (timeString > offTime)) || ((timeString < onTime) && (timeString < offTime)))
-    {
-      if (number == 1)
-      {
+  } else {
+    if (((timeString > onTime) && (timeString > offTime)) || ((timeString < onTime) && (timeString < offTime))) {
+      if (number == 1) {
         relay1.flag = 1;
         RELAY1ON;
         relay1.relayState = "ON";
-      }
-      else if (number == 2)
-      {
+      } else if (number == 2) {
         relay2.flag = 1;
         RELAY2ON;
         relay2.relayState = "ON";
-      }
-      else if (number == 3)
-      {
+      } else if (number == 3) {
         relay3.flag = 1;
         RELAY3ON;
         relay3.relayState = "ON";
-      }
-      else if (number == 4)
-      {
+      } else if (number == 4) {
         relay4.flag = 1;
         RELAY4ON;
         relay4.relayState = "ON";
       }
-    }
-    else
-    {
-      if (number == 1)
-      {
+    } else {
+      if (number == 1) {
         relay1.flag = 0;
         RELAY1OFF;
         relay1.relayState = "OFF";
-      }
-      else if (number == 2)
-      {
+      } else if (number == 2) {
         relay2.flag = 0;
         RELAY2OFF;
         relay2.relayState = "OFF";
-      }
-      else if (number == 3)
-      {
+      } else if (number == 3) {
         relay3.flag = 0;
         RELAY3OFF;
         relay3.relayState = "OFF";
-      }
-      else if (number == 4)
-      {
+      } else if (number == 4) {
         relay4.flag = 0;
         RELAY4OFF;
         relay4.relayState = "OFF";
@@ -2336,29 +2086,24 @@ void checkTimeFor(int onTime, int offTime, int number)
 /*
 Checks for Relay status and displays the ON status for all the relays as R1, R2, R3, R4
 */
-void relayStatusPrinter()
-{
+void relayStatusPrinter() {
   display.setTextSize(1);
   display.setTextColor(WHITE);
-  if (relay1.flag)
-  {
+  if (relay1.flag) {
     display.setCursor(0, 57);
     display.print("R1");
   }
-  if (relay2.flag)
-  {
+  if (relay2.flag) {
     display.setCursor(20, 57);
     display.print("R2");
   }
 
-  if (relay3.flag)
-  {
+  if (relay3.flag) {
     display.setCursor(40, 57);
     display.print("R3");
   }
 
-  if (relay4.flag)
-  {
+  if (relay4.flag) {
     display.setCursor(60, 57);
     display.print("R4");
   }
