@@ -1,4 +1,17 @@
-# Aquarium Automation using NodeMCU ESP-12E V3.0
+# Aquarium Automation using NodeMCU ESP-12E V3.0 🐟
+
+<div align="center">
+
+[![License](https://img.shields.io/github/license/desiFish/Smart-Aquarium-V3.0?color=blue&style=for-the-badge)](https://github.com/desiFish/Smart-Aquarium-V3.0/blob/main/LICENSE)
+[![Stars](https://img.shields.io/github/stars/desiFish/Smart-Aquarium-V3.0?style=for-the-badge&color=yellow)](https://github.com/desiFish/Smart-Aquarium-V3.0/stargazers)
+[![Issues](https://img.shields.io/github/issues/desiFish/Smart-Aquarium-V3.0?style=for-the-badge&color=green)](https://github.com/desiFish/Smart-Aquarium-V3.0/issues)
+[![Arduino](https://img.shields.io/badge/Arduino-IDE-00979D?style=for-the-badge&logo=Arduino&logoColor=white)](https://www.arduino.cc/)
+[![ESP8266](https://img.shields.io/badge/ESP8266-IoT-red?style=for-the-badge&logo=esphome&logoColor=white)](https://www.espressif.com/)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)](https://github.com/desiFish/Smart-Aquarium-V3.0/graphs/commit-activity)
+[![Website](https://img.shields.io/website?style=for-the-badge&up_message=online&url=https%3A%2F%2Fgithub.com%2FdesiFish%2FSmart-Aquarium-V3.0)](https://github.com/desiFish/Smart-Aquarium-V3.0)
+[![made-with-arduino](https://img.shields.io/badge/Made%20with-Arduino-1f425f.svg?style=for-the-badge)](https://www.arduino.cc/)
+
+</div>
 
 ## ⚠️ Disclaimer
 **HIGH VOLTAGE electricity involved!** Use at your own risk. Work under proper supervision if you are a minor. I take no responsibility for any accidents that may occur from using this code.
@@ -20,17 +33,6 @@
 - Visual feedback and WiFi signal indicators
 
 ## 📦 Prerequisites
-
-### Required Libraries
-1. [DS3231](https://github.com/NorthernWidget/DS3231) - RTC module
-2. [NTPClient](https://github.com/arduino-libraries/NTPClient) - Network time
-3. Other libraries available via Arduino IDE Library Manager:
-   - ESP8266WiFi
-   - ESPAsyncTCP
-   - ESPAsyncWebServer
-   - Adafruit_GFX
-   - Adafruit_SSD1306
-
 ### ESP8266 Board Support
 Add this URL in Arduino IDE:
 ```
@@ -58,34 +60,46 @@ File → Preferences → Additional Boards Manager URLs
 | D6 | IN3 |
 | D7 | IN4 |
 
-> Important: Use separate power supply for relay board. Connect GND between NodeMCU and power supply.
+> Important: Do not fetch power from ESP GPIO Pins for relay board. Connect GND between NodeMCU, Relay and power supply.
 
 ## 🛠️ Required Components
 
+<div align="center">
+
 ### Core Components
-1. **Relay Board**
-   - 4 Channel 5V SSR (Solid State Relay)
-   - 250V 2A with Resistive Fuse
-   - ![Relay Board](https://robu.in/wp-content/uploads/2021/11/5v-4-channel-ssr-solid-state-relay-module-240v-2a-output-with-resistive-fuse-tech7978-6426-2-550x550-1.jpg)
 
-2. **RTC Module**
-   - DS3231 AT24C32 IIC Precision RTC
-   - ![DS3231](https://m.media-amazon.com/images/I/41RP9FjC+jL.jpg)
+<table>
+<tr>
+    <td align="center">
+        <img src="https://robu.in/wp-content/uploads/2021/11/5v-4-channel-ssr-solid-state-relay-module-240v-2a-output-with-resistive-fuse-tech7978-6426-2-550x550-1.jpg" width="200px" alt="Relay Board"/><br />
+        <b>Relay Board</b><br />
+        <sub>4 Channel 5V SSR</sub><br />
+        <sub>250V 2A with Resistive Fuse</sub>
+    </td>
+    <td align="center">
+        <img src="https://m.media-amazon.com/images/I/41RP9FjC+jL.jpg" width="200px" alt="DS3231"/><br />
+        <b>RTC Module</b><br />
+        <sub>DS3231 I2C</sub><br />
+        <sub>Precision RTC</sub>
+    </td>
+</tr>
+<tr>
+    <td align="center">
+        <img src="https://m.media-amazon.com/images/I/51lIrI5vnQL.jpg" width="200px" alt="NodeMCU"/><br />
+        <b>Microcontroller</b><br />
+        <sub>NodeMCU-ESP8266</sub><br />
+        <sub>ESP12E Development Board</sub>
+    </td>
+    <td align="center">
+        <img src="https://www.electronicscomp.com/image/cache/catalog/13-inch-i2c-iic-oled-display-module-4pin-white-800x800.jpg" width="200px" alt="OLED"/><br />
+        <b>OLED Display</b><br />
+        <sub>1.3" I2C I2C 128x64</sub><br />
+        <sub>Any Color</sub>
+    </td>
+</tr>
+</table>
 
-3. **Microcontroller**
-   - NodeMCU-ESP8266 Development Board ESP12E
-   - ![NodeMCU](https://m.media-amazon.com/images/I/51lIrI5vnQL.jpg)
-
-4. **Display**
-   - 1.3" I2C IIC 128x64 OLED Display Module
-   - White color
-   - ![OLED](https://www.electronicscomp.com/image/cache/catalog/13-inch-i2c-iic-oled-display-module-4pin-white-800x800.jpg)
-
-### Additional Requirements
-- Appropriate power supplies
-- Electrical switches (recommended in series with relays)
-- Connecting wires
-- Project enclosure
+</div>
 
 ## 🌐 Web Interface
 ![Web Interface](https://github.com/chikne97/Smart-Aquarium-V3.0/blob/main/demo2.png)
@@ -95,3 +109,59 @@ See [Issues](https://github.com/KamadoTanjiro-beep/Smart-Aquarium-V3.0/issues) f
 
 ## 🤝 Contributing
 If you've made improvements to the code, please share them! Contact me with your updates.
+
+## 📄 License Summary
+
+<details>
+<summary>Click to expand detailed license information</summary>
+
+<table>
+<tr>
+    <th colspan="2">GNU General Public License v3.0 Details</th>
+</tr>
+<tr>
+    <td><b>Permissions</b></td>
+    <td>
+        ✅ Commercial use - Use for business purposes<br>
+        ✅ Modification - Modify the code<br>
+        ✅ Distribution - Share the code<br>
+        ✅ Patent use - This license provides an express grant of patent rights from contributors
+    </td>
+</tr>
+<tr>
+    <td><b>Conditions</b></td>
+    <td>
+        📝 License and copyright notice - Include the original license and copyright<br>
+        📝 State changes - Document all changes made to the code<br>
+        📝 Disclose source - Source code must be made available when distributing<br>
+        📝 Same license - Modifications must be released under the same license
+    </td>
+</tr>
+<tr>
+    <td><b>Limitations</b></td>
+    <td>
+        ⚠️ No Liability - Author is not responsible for damages<br>
+        ⚠️ No Warranty - Code is provided "as is"<br>
+        ⚠️ Must preserve copyleft - Cannot change to a more restrictive license
+    </td>
+</tr>
+</table>
+
+<sub>This is a copyleft license that requires anyone who distributes your code or a derivative work to make the source available under the same terms.</sub>
+<br>
+<sub>For complete license text, see [LICENSE](/LICENSE)</sub>
+</details>
+
+---
+
+<div align="center">
+
+### Made with ❤️ for the IoT Community
+
+<p>
+<a href="https://github.com/desiFish/Smart-Aquarium-V3.0/stargazers">⭐ Star this project</a> &nbsp;|&nbsp; 
+<a href="https://github.com/desiFish/Smart-Aquarium-V3.0/issues">🐛 Report Bug</a> &nbsp;|&nbsp;
+<a href="https://github.com/desiFish/Smart-Aquarium-V3.0/issues">✨ Request Feature</a>
+</p>
+
+</div>
