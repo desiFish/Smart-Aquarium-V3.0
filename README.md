@@ -102,13 +102,58 @@ File → Preferences → Additional Boards Manager URLs
 </div>
 
 ## 🌐 Web Interface
-![Web Interface](https://github.com/chikne97/Smart-Aquarium-V3.0/blob/main/demo2.png)
+
+<div align="center">
+
+<table>
+<tr>
+    <td align="center" colspan="2">
+        <img src="https://github.com/chikne97/Smart-Aquarium-V3.0/blob/main/demo2.png" width="800px" alt="Web Interface"/><br/>
+        <b>Responsive Web Dashboard</b>
+    </td>
+</tr>
+<tr>
+    <td align="center" width="50%">
+        <h3>🎮 Control Features</h3>
+        <ul align="left">
+            <li>⏱️ Time-based automation</li>
+            <li>🔌 Manual device control</li>
+            <li>⚡ Power saver mode</li>
+            <li>⏲️ Custom timer settings</li>
+        </ul>
+    </td>
+    <td align="center" width="50%">
+        <h3>📊 Dashboard Features</h3>
+        <ul align="left">
+            <li>📡 Real-time status updates</li>
+            <li>📱 Mobile-responsive design</li>
+            <li>🔔 Visual status indicators</li>
+            <li>📈 Device runtime statistics</li>
+        </ul>
+    </td>
+</tr>
+</table>
+
+</div>
+
+## 🤝 Contributing
+We welcome contributions! Here's how you can help:
+- 🔀 Fork the repository
+- 👩‍💻 Create your feature branch
+- ✨ Make your changes
+- 📝 Open a Pull Request
+
+## 🚀 Future Aspects
+Here's what more can be done:
+- 📱 Mobile App Integration
+- 🌡️ Temperature Control
+- 💧 Water Level Monitoring
+- 🔄 Auto Water Change System
+
+See our [Issues](https://github.com/desiFish/Smart-Aquarium-V3.0/issues) page for detailed roadmap and planned features.
 
 ## 🔄 Future Updates
 See [Issues](https://github.com/KamadoTanjiro-beep/Smart-Aquarium-V3.0/issues) for planned features and improvements.
-
-## 🤝 Contributing
-If you've made improvements to the code, please share them! Contact me with your updates.
 
 ## 📄 License Summary
 
