@@ -1,5 +1,7 @@
 # Aquarium Automation using NodeMCU ESP-12E V3.0 🐟
 
+> 📢 **Development Notice**: This ESP8266 version will no longer receive feature updates. A new ESP32 edition is under development that will provide more powerful customization options and advanced monitoring features for aquarium inhabitants. Stay tuned! 🚀
+
 <div align="center">
 
 [![License](https://img.shields.io/github/license/desiFish/Smart-Aquarium-V3.0?color=blue&style=for-the-badge)](https://github.com/desiFish/Smart-Aquarium-V3.0/blob/main/LICENSE)
@@ -7,7 +9,7 @@
 [![Issues](https://img.shields.io/github/issues/desiFish/Smart-Aquarium-V3.0?style=for-the-badge&color=green)](https://github.com/desiFish/Smart-Aquarium-V3.0/issues)
 [![Arduino](https://img.shields.io/badge/Arduino-IDE-00979D?style=for-the-badge&logo=Arduino&logoColor=white)](https://www.arduino.cc/)
 [![ESP8266](https://img.shields.io/badge/ESP8266-IoT-red?style=for-the-badge&logo=esphome&logoColor=white)](https://www.espressif.com/)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)](https://github.com/desiFish/Smart-Aquarium-V3.0/graphs/commit-activity)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-no%20(ESP32%20coming%20soon)-red.svg?style=for-the-badge)](https://github.com/desiFish/Smart-Aquarium-V3.0/graphs/commit-activity)
 [![Website](https://img.shields.io/website?style=for-the-badge&up_message=online&url=https%3A%2F%2Fgithub.com%2FdesiFish%2FSmart-Aquarium-V3.0)](https://github.com/desiFish/Smart-Aquarium-V3.0)
 [![made-with-arduino](https://img.shields.io/badge/Made%20with-Arduino-1f425f.svg?style=for-the-badge)](https://www.arduino.cc/)
 

@@ -324,7 +324,7 @@ Below are CONFIGURATION of relays*/
 struct_relay relay1 = {1200, 1900, 1, 0, 0, false, 0, 0, 2, "OFF", 0, 0, 0, 0, 600000, 600000};
 struct_relay relay2 = {1200, 1900, 2, 2, 0, false, 0, 1, 2, "OFF", 0, 0, 0, 0, 600000, 1800000};
 struct_relay relay3 = {1200, 1900, 3, 0, 0, false, 0, 0, 2, "OFF", 0, 0, 0, 0, 600000, 600000}; // I am using this for filter, which is crucial thing, hence by default it's ON and in Manual Mode
-struct_relay relay4 = {800, 1600, 4, 1, 0, true, 1, 0, 2, "OFF", 0, 0, 0, 0, 600000, 600000};
+struct_relay relay4 = {800, 1500, 4, 1, 0, true, 1, 0, 2, "OFF", 0, 0, 0, 0, 600000, 600000}; //light
 
 /*
 Checks configuration and turns on the relays or reads config from SPIFF(to be implemented later)
@@ -1962,7 +1962,7 @@ void loop()
   // checking wifi strength
   if ((millis() - lastTime1) > timerDelay1)
   {
-    server.begin();
+    server.begin(); // Start server (fixes the server not responding issue that happens due to noise in power due to on off of inductive load)
     if (OLEDStatus)
     {
       showTime();
