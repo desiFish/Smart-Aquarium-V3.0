@@ -53,6 +53,12 @@ Library Manager → Search and Install, or download ZIP and add manually
 
 > **Note**: Remove any conflicting libraries from your Arduino libraries folder before installation to avoid compilation errors.
 
+### Network Configuration
+> **Important**: Incorrect network configuration may result in connection issues. Consult your network administrator if unsure.
+
+### WiFi Credentials
+> **Note**: Ensure to update your WiFi credentials in the code before uploading to the NodeMCU.
+
 ## 🔧 Hardware Setup
 
 ### I2C Devices (DS3231 & OLED 128x64)

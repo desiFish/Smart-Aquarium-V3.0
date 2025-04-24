@@ -95,15 +95,15 @@ TEMP. SOLUTION- Select the choice of timer i.e. 5 min, 15 min or 30 min, quickly
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <ESP8266WiFi.h>
-#include <ESPAsyncTCP.h>
-#include <ESPAsyncWebServer.h>
+#include <ESPAsyncTCP.h>       // check readme for correct library
+#include <ESPAsyncWebServer.h> // check readme for correct library
 #include <NTPClient.h>
 #include <FS.h> //Include File System Headers
 // OTA
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#include <DS3231.h>
+#include <DS3231.h> // check readme for correct library
 #include <string.h>
 
 #include "global.h" //remove this (you may keep it if you store your pass and ssid here)
@@ -115,8 +115,8 @@ TEMP. SOLUTION- Select the choice of timer i.e. 5 min, 15 min or 30 min, quickly
 #define STAPSK "YOUR_PASSWORD" // WIFI PASSWORD
 #endif
 
-const char *ssid = pssid;     // replace "pssid" and with "STASSID" (STRING Data)
-const char *password = ppass; // replace "ppass" and with "STAPSK" (STRING Data)
+const char *ssid = pssid;     // replace "pssid" and with "STASSID" (STRING type)
+const char *password = ppass; // replace "ppass" and with "STAPSK" (STRING type)
 
 const char *PARAM_INPUT_1 = "count";
 const char *PARAM_INPUT_2 = "code";
@@ -160,7 +160,7 @@ char week[7][20] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
 // Define NTP Client to get time
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "asia.pool.ntp.org", utcOffsetInSeconds);
+NTPClient timeClient(ntpUDP, "asia.pool.ntp.org", utcOffsetInSeconds); // set your NTP server here
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -324,7 +324,7 @@ Below are CONFIGURATION of relays*/
 struct_relay relay1 = {1200, 1900, 1, 0, 0, false, 0, 0, 2, "OFF", 0, 0, 0, 0, 600000, 600000};
 struct_relay relay2 = {1200, 1900, 2, 2, 0, false, 0, 1, 2, "OFF", 0, 0, 0, 0, 600000, 1800000};
 struct_relay relay3 = {1200, 1900, 3, 0, 0, false, 0, 0, 2, "OFF", 0, 0, 0, 0, 600000, 600000}; // I am using this for filter, which is crucial thing, hence by default it's ON and in Manual Mode
-struct_relay relay4 = {800, 1500, 4, 1, 0, true, 1, 0, 2, "OFF", 0, 0, 0, 0, 600000, 600000}; //light
+struct_relay relay4 = {800, 1500, 4, 1, 0, true, 1, 0, 2, "OFF", 0, 0, 0, 0, 600000, 600000};   // light
 
 /*
 Checks configuration and turns on the relays or reads config from SPIFF(to be implemented later)
@@ -1862,7 +1862,7 @@ void loop()
   }
   //**************************************END RELAY POWER SAVE FEATURE****************************************
 
-  if (updateTime == 1)
+  if (updateTime == 1) // updates RTC time when requested from web page
   {
     updateRTC();
     updateTime = 0;
