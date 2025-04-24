@@ -42,6 +42,17 @@ http://arduino.esp8266.com/stable/package_esp8266com_index.json
 ```
 File → Preferences → Additional Boards Manager URLs
 
+### Required Libraries
+Install these libraries in Arduino IDE:
+```
+https://github.com/NorthernWidget/DS3231
+https://github.com/dvarrel/ESPAsyncTCP
+https://github.com/ESP32Async/ESPAsyncWebServer
+```
+Library Manager → Search and Install, or download ZIP and add manually
+
+> **Note**: Remove any conflicting libraries from your Arduino libraries folder before installation to avoid compilation errors.
+
 ## 🔧 Hardware Setup
 
 ### I2C Devices (DS3231 & OLED 128x64)
@@ -63,6 +74,9 @@ File → Preferences → Additional Boards Manager URLs
 | D7 | IN4 |
 
 > Important: Do not fetch power from ESP GPIO Pins for relay board. Connect GND between NodeMCU, Relay and power supply.
+
+## 📋 Schematics
+For detailed wiring and connection diagrams, please refer to the [project schematics](https://github.com/chikne97/Smart-Aquarium-V3.0/blob/main/resources/desiFish_smartAquariumV3Schematics.pdf).
 
 ## 🛠️ Required Components
 
