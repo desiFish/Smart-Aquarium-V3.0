@@ -84,6 +84,12 @@ Library Manager → Search and Install, or download ZIP and add manually
 ## 📋 Schematics
 For detailed wiring and connection diagrams, please refer to the [project schematics](https://github.com/chikne97/Smart-Aquarium-V3.0/blob/main/resources/desiFish_smartAquariumV3Schematics.pdf).
 
+<div align="center">
+    <img src="https://github.com/chikne97/Smart-Aquarium-V3.0/blob/main/resources/desiFish_smartAquariumV3Schematics.png" width="800px" alt="Wiring Diagram"/>
+    <br/>
+    <sub>Circuit Diagram</sub>
+</div>
+
 ## 🛠️ Required Components
 
 <div align="center">
