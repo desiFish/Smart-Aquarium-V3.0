@@ -1,6 +1,6 @@
 # Aquarium Automation using NodeMCU ESP-12E V3.0 🐟
 
-> 📢 **Development Notice**: This ESP8266 version will no longer receive feature updates. A new ESP32 edition is under development that will provide more powerful customization options and advanced monitoring features for aquarium inhabitants. Stay tuned! 🚀
+> 📢 **Development Notice**: This ESP8266 version will no longer receive feature updates. A new [ESP32 edition](https://github.com/desiFish/Project_Mina) is under development that will provide more powerful customization options and advanced monitoring features for aquarium inhabitants. Stay tuned! 🚀
 
 <div align="center">
 
