@@ -1,6 +1,6 @@
 # Aquarium Automation using NodeMCU ESP-12E V3.0 🐟
 
-> 📢 **Development Notice**: This NodeMCU ESP-12E version will no longer receive feature updates. A new NodeMCU 12E (ESP8266) version: [Smart Aquarium V3.1](https://github.com/desiFish/Smart-Aquarium-V3.1) is ready & ESP32 version: [Smart Aquarium V4.0](https://github.com/desiFish/Smart-Aquarium-V4.0) is under development that supports more powerful customization options and advanced monitoring features for aquarium inhabitants. Be the first ones to try it out and give feedbacks! 🚀
+> 📢 **Development Notice**: This project will no longer receive feature updates. A new NodeMCU 12E (ESP8266) version: [Smart Aquarium V3.1](https://github.com/desiFish/Smart-Aquarium-V3.1) is ready & ESP32 version: [Smart Aquarium V4.0](https://github.com/desiFish/Smart-Aquarium-V4.0) is under development that supports more powerful customization options and advanced monitoring features for aquarium inhabitants. Be the first ones to try it out and give feedbacks! 🚀
 
 <div align="center">
 
