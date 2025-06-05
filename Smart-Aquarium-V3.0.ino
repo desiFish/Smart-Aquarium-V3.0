@@ -106,8 +106,7 @@ TEMP. SOLUTION- Select the choice of timer i.e. 5 min, 15 min or 30 min, quickly
 #include <DS3231.h> // check readme for correct library
 #include <string.h>
 
-#include "global.h" //remove this (you may keep it if you store your pass and ssid here)
-// ESPNOW
+#include "global.h" //remove this 
 #include <espnow.h>
 
 #ifndef STASSID
